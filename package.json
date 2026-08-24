@@ -1,0 +1,44 @@
+{
+  "name": "dsh-paste-doc",
+  "version": "0.1.8",
+  "description": "DSH（DeepSeek Harness）客户端插件：粘贴长文本时自动生成可折叠的「文本文档引用」，效果类似 DeepSeek 官方聊天的文档折叠。",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "client-plugin",
+    "paste",
+    "citation",
+    "chat",
+    "web"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ]
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "node test/smoke.mjs",
+    "pack": "pnpm pack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dzf-code/dsh-paste-doc.git"
+  },
+  "license": "MIT"
+}
