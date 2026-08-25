@@ -74,8 +74,9 @@ assert.equal(typeof dockFactory, "function");
 // --- render the dock component (manual render pass) ---
 renderCtx = { refs: [], state: [], stateIdx: 0, effects: [] };
 let liveOccurrences = [];
+let livePhase = "plain";
 const props = {
-  useInput: (sel) => sel({ draftRev: 42, occurrences: liveOccurrences }),
+  useInput: (sel) => sel({ draftRev: 42, occurrences: liveOccurrences, phase: livePhase }),
   inputActions: { setDraft: (t) => setDraftCalls.push(t) },
   sessionId: "s1"
 };
@@ -159,6 +160,17 @@ assert.equal(bailCalls.length, 0);
 pasteHandler({ target: ta, ctrlKey: false, shiftKey: false, clipboardData: { getData: () => "hi", items: [] }, preventDefault() { prevented = true; }, stopImmediatePropagation() {} });
 assert.equal(prevented, false, "short paste passes through");
 assert.equal(bailCalls.length, 0);
+
+// --- claimed (command/plan claim) phase: paste raw, no chip conversion ---
+renderCtx = { refs: [], state: [], stateIdx: 0, effects: [] };
+livePhase = "claimed";
+dockEntry.comp(props); // re-render so phaseRef.current = "claimed"
+for (const fn of renderCtx.effects) fn();
+prevented = false; bailCalls.length = 0;
+pasteHandler({ target: ta, ctrlKey: false, shiftKey: false, clipboardData: { getData: () => longText, items: [] }, preventDefault() { prevented = true; }, stopImmediatePropagation() {} });
+assert.equal(prevented, false, "claimed phase: paste passes through (not intercepted)");
+assert.equal(bailCalls.length, 0, "claimed phase: no chip inserted");
+livePhase = "plain"; // reset
 
 // --- readonly textarea is never intercepted ---
 const taRo = Object.assign(new HTMLTextAreaElement(), { value: "abc", selectionStart: 0, selectionEnd: 0, readOnly: true, disabled: false, closest: (sel) => sel === "[data-composer-card]" ? {} : null, setSelectionRange() {} });
