@@ -34,10 +34,10 @@
 
 插件声明了 `dsh.bundle.patch` 并随包携带 `cordis.patch.yml`，安装后自动加入 profile 的 bundle 层，**无需再手工编辑任何配置文件**。任选一种来源：
 
-**从 npm 安装**（⚠️ 尚未发布到 npm，此命令暂不可用；发布后即可使用，届时会第一时间更新说明）：
+**从 GitHub 直接安装**（推荐，无需 npm、无需本地打包）：
 
 ```bash
-dsh plugin --profile web add dsh-paste-doc
+dsh plugin --profile web add "github:dzf-code/dsh-paste-doc"
 ```
 
 **从本地打包文件安装**（先用 `pnpm pack` 生成 `dsh-paste-doc-<version>.tgz`）：
@@ -50,12 +50,6 @@ dsh plugin --profile web add "file:/绝对路径/dsh-paste-doc-<version>.tgz"
 
 ```bash
 dsh plugin --profile web add "link:/绝对路径/dsh-paste-doc"
-```
-
-**从 GitHub 直接安装**（无需 npm、无需本地打包）：
-
-```bash
-dsh plugin --profile web add "github:dzf-code/dsh-paste-doc"
 ```
 
 安装完成后**重启 `dsh web`**，进入设置 → 插件列表确认 `paste-doc` 状态为 active。
