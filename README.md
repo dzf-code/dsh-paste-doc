@@ -30,7 +30,37 @@
 - DSH `web` profile（`~/.dsh/profiles/web`）
 - pnpm
 
-### 步骤
+### 方式一：`dsh plugin add` 一键安装（推荐，v0.1.10+）
+
+插件声明了 `dsh.bundle.patch` 并随包携带 `cordis.patch.yml`，安装后自动加入 profile 的 bundle 层，**无需再手工编辑任何配置文件**。任选一种来源：
+
+**从 npm 安装**（发布到 npm 后，最简）：
+
+```bash
+dsh plugin --profile web add dsh-paste-doc
+```
+
+**从本地打包文件安装**（先用 `pnpm pack` 生成 `dsh-paste-doc-<version>.tgz`）：
+
+```bash
+dsh plugin --profile web add "file:/绝对路径/dsh-paste-doc-<version>.tgz"
+```
+
+**本地开发直链安装**（源码改动即时生效，无需反复打包，推荐开发时使用）：
+
+```bash
+dsh plugin --profile web add "link:/绝对路径/dsh-paste-doc"
+```
+
+**从 GitHub 直接安装**（无需 npm、无需本地打包）：
+
+```bash
+dsh plugin --profile web add "github:dzf-code/dsh-paste-doc"
+```
+
+安装完成后**重启 `dsh web`**，进入设置 → 插件列表确认 `paste-doc` 状态为 active。
+
+### 方式二：手动安装（备选 / 兼容旧版）
 
 1. **打包插件**（或直接使用 release 中的 `dsh-paste-doc-<version>.tgz`）：
 
@@ -43,7 +73,7 @@
 
    ```bash
    cd ~/.dsh/profiles/web
-   pnpm add "file:/绝对路径/dsh-paste-doc-0.1.8.tgz"
+   pnpm add "file:/绝对路径/dsh-paste-doc-<version>.tgz"
    ```
 
 3. **在 `cordis.patch.yml` 中启用插件**（追加到末尾）：
@@ -96,6 +126,7 @@ dsh-paste-doc/
 │   └── client.js     # 浏览器端 bundle（核心逻辑，lazy-CJS factory 格式）
 ├── test/
 │   └── smoke.mjs     # 冒烟测试（mock 浏览器环境，Node 直接运行）
+├── cordis.patch.yml  # bundle 挂载声明（`dsh plugin add` 安装时自动应用）
 ├── package.json
 ├── README.md
 ├── CHANGELOG.md
