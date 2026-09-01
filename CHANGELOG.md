@@ -1,5 +1,8 @@
 # 更新日志
 
+## 0.1.10
+- 支持 `dsh plugin --profile web add` 标准安装：package.json 增加 `dsh.bundle.patch` 声明并随包发布 `cordis.patch.yml`，安装后自动加入 profile 的 bundle 层，无需再手工编辑 profile 的 `cordis.patch.yml`。
+
 ## 0.1.9
 - 修复与 plan/命令模式联动时粘贴数据丢失：命令 claim 生效（`claimed` 阶段）时改为放行纯文本粘贴，避免引用芯片占位符导致进入命令 args 的全文被截断；普通模式芯片功能保持不变。
 

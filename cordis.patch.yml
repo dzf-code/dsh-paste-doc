@@ -1,0 +1,9 @@
+# dsh bundle patch: 把 dsh-paste-doc 挂载进 profile 的插件树。
+#
+# 安装方式（不再需要手工编辑 profile 的 cordis.patch.yml）：
+#   dsh plugin --profile web add dsh-paste-doc            # npm 发布后按包名安装
+#   dsh plugin --profile web add file:<绝对路径>/dsh-paste-doc-<版本>.tgz   # 本地打包安装
+#   dsh plugin --profile web add link:<插件目录绝对路径>   # 本地开发直链安装
+- insert:
+    - id: paste-doc
+      name: dsh-paste-doc
