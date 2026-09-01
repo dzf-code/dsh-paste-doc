@@ -34,7 +34,7 @@
 
 插件声明了 `dsh.bundle.patch` 并随包携带 `cordis.patch.yml`，安装后自动加入 profile 的 bundle 层，**无需再手工编辑任何配置文件**。任选一种来源：
 
-**从 npm 安装**（发布到 npm 后，最简）：
+**从 npm 安装**（⚠️ 尚未发布到 npm，此命令暂不可用；发布后即可使用，届时会第一时间更新说明）：
 
 ```bash
 dsh plugin --profile web add dsh-paste-doc
