@@ -25,6 +25,17 @@
 
 ## 安装（在 DSH 中启用）
 
+### 兼容性
+
+| DSH 版本 | 输入框形态 | 支持情况 |
+| --- | --- | --- |
+| **≥ `0.1.5`**（含 `0.1.5-rc.*`） | Lexical contenteditable 编辑器 | ✅ 自 **v0.1.11** 起（v0.1.12 起芯片样式同步适配） |
+| **< `0.1.5`** | `<textarea>` | ✅ 自 v0.1.0 起 |
+
+> DSH `0.1.5` 同时改了两处底层实现：输入框由 `<textarea>` 换成 Lexical 富文本编辑器，引用芯片由 `data-decoration=chip` 标记改为 Lexical 节点（类名为 CSS Module 哈希值）。
+>
+> **插件自 v0.1.11 起自动兼容两种形态**：光标位置走新版 `conversation.input.for(actx).caretSpan()`，粘贴兜底走 `shell.paste()`；旧版回退到 textarea 选区 API。**建议始终使用最新版插件**，升级 DSH 后无需额外配置。
+
 ### 前置
 
 - DSH `web` profile（`~/.dsh/profiles/web`）
@@ -107,7 +118,7 @@ dsh plugin --profile web add "link:/绝对路径/dsh-paste-doc"
 └─ 空 apply：让 loader 的宿主 fiber 正常激活（客户端插件约定）
 ```
 
-> 文档库保存在浏览器内存中（刷新页面即清空）；引用芯片的样式通过 childList MutationObserver 打 `data-paste-doc-chip` 标记后由 CSS 定制，仅影响本插件的芯片。
+> 文档库保存在浏览器内存中（刷新页面即清空）；引用芯片的样式通过 childList MutationObserver 打 `data-paste-doc-chip` 标记后由 CSS 定制，仅影响本插件的芯片。识别方式随 DSH 版本而异：`≥ 0.1.5` 的 Lexical 芯片按根节点 `title`（插件标签）识别，旧版按 `data-decoration=chip` + 首个子元素标签文本识别。
 
 ## 开发
 
@@ -132,8 +143,11 @@ dsh-paste-doc/
 ```bash
 node test/smoke.mjs
 # 覆盖：长文本拦截、引用插入事件、序列化、词典、候选、
-#       Ctrl+Shift+V 逃生、只读输入框放行、卡片与芯片同步、source/name 一致性
+#       Ctrl+Shift+V 逃生、只读输入框放行、卡片与芯片同步、source/name 一致性、
+#       两种输入框形态（旧 <textarea> / 新 Lexical contenteditable）与两种芯片 DOM 的标记
 ```
+
+> 改动 `lib/client.js` 后请用同一份测试对新旧两条路径都跑一遍；历史上出现过"测试 mock 了旧输入框、生产环境已换成新输入框"导致测试全绿但插件失效的情况。
 
 ### 修改后同步到本机安装
 
@@ -158,6 +172,8 @@ node test/smoke.mjs
 
 | 现象 | 原因 / 处理 |
 | --- | --- |
+| 升级 DSH 后插件完全失效：粘贴长文本没反应且**控制台无任何报错** | DSH `0.1.5` 把输入框换成了 Lexical 编辑器；升级插件到 **v0.1.11+** |
+| 芯片样式变成默认浅蓝底 / 6px 圆角（不再是极简描边胶囊） | DSH `0.1.5` 起芯片改为 Lexical 节点（旧 `data-decoration=chip` 标记废弃）；升级插件到 **v0.1.12+** |
 | 安装后重启失败 | 宿主侧入口必须是合法 cordis 插件（空 `apply`）——0.1.1 已修复 |
 | 粘贴长文本后卡死 | 0.1.4 修复：移除 title 属性写回循环，观察器只保留 childList |
 | 发送报错 `slash: no serializer...` | 0.1.5 修复：插入 source 与 source 注册名不一致 |
