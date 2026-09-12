@@ -1,6 +1,6 @@
 {
   "name": "dsh-paste-doc",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "DSH（DeepSeek Harness）客户端插件：粘贴长文本时自动生成可折叠的「文本文档引用」，效果类似 DeepSeek 官方聊天的文档折叠。",
   "keywords": [
     "dsh",

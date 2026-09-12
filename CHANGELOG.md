@@ -1,5 +1,10 @@
 # 更新日志
 
+## 0.1.12
+- 恢复新版芯片的自定义外观：dsh ≥ 0.1.5 的引用芯片是 Lexical 节点，类名为 CSS Module 哈希值、旧的 `data-decoration=chip` 标记已废弃，导致样式失效。现在通过芯片根节点的 `title`（即插件标签 `📄 …`）识别自己的芯片，同时保留对旧版 `data-decoration=chip` 的支持。
+- 样式规则选择器改为 `[data-paste-doc-chip][data-paste-doc-chip]`（双属性提升优先级），确保压过框架哈希类名的默认样式（默认蓝底/6px 圆角 → 透明底 + 中性描边胶囊）。
+- 冒烟测试补充新版/旧版两种芯片 DOM 的标记用例（旧代码跑该用例会失败）。
+
 ## 0.1.11
 - 修复在 dsh ≥ 0.1.5（如 0.1.5-rc.2）上完全失效：新版输入框由 `<textarea>` 改为 Lexical contenteditable 编辑器，旧粘贴处理器首行的 `instanceof HTMLTextAreaElement` 判定永远不成立，导致长文本粘贴被静默忽略（无任何报错）。现同时兼容两种输入框形态。
 - 光标位置改走新版 shell：`conversation.input.for(actx).caretSpan()` 取选区、`shell.rev` 作修订号 CAS，取代 textarea 的 `selectionStart/End`；插入被拒时兜底改为 `shell.paste(text)`（更旧版本仍回退 `setDraft`）。

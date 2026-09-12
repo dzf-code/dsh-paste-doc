@@ -254,4 +254,26 @@ assert.equal(prevented, true, "contenteditable composer: refused insert still sw
 assert.equal(shellPastes.length, 1, "refused insert falls back to shell.paste(text)");
 assert.equal(shellPastes[0], longText, "fallback pastes the original text");
 
+// --- chip tagger covers both chip DOMs (legacy data-decoration + new Lexical title) ---
+// The Lexical chip's class names are CSS-module hashes, so the label it exposes as `title`
+// is the only stable hook; the legacy chip keeps its label as the first child instead.
+const ownChip = { dataset: {}, title: "📄 这是很长的一段文本…", firstElementChild: { textContent: "@" }, querySelectorAll: () => [] };
+const otherChip = { dataset: {}, title: "其他引用", firstElementChild: { textContent: "@" }, querySelectorAll: () => [] };
+const legacyChip = { dataset: {}, firstElementChild: { textContent: "📄 旧版标签" }, querySelectorAll: () => [] };
+let observerInstance = null;
+globalThis.MutationObserver = class {
+  constructor(cb) { this.cb = cb; }
+  observe() { observerInstance = this; }
+  disconnect() {}
+};
+document.body = {
+  querySelectorAll: (sel) => (String(sel).includes('title^') ? [ownChip, otherChip, legacyChip] : []),
+  closest: () => null
+};
+surface.apply(ctx2); // re-apply: the tagger effect scans document.body
+assert.equal(ownChip.dataset.pasteDocChip, "1", "new Lexical chip tagged via its title");
+assert.equal(legacyChip.dataset.pasteDocChip, "1", "legacy chip still tagged via its label child");
+assert.equal(otherChip.dataset.pasteDocChip, void 0, "foreign chip is never tagged");
+assert.ok(observerInstance !== null, "chip observer installed on document.body");
+
 console.log("ALL SMOKE ASSERTIONS PASSED");
