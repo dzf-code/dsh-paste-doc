@@ -179,4 +179,79 @@ pasteHandler({ target: taRo, ctrlKey: false, shiftKey: false, clipboardData: { g
 assert.equal(prevented, false, "readonly paste passes through");
 assert.equal(bailCalls.length, 0);
 
+// --- regression (dsh >= 0.1.5): Lexical contenteditable composer, no <textarea> ---
+// Before the fix the handler started with `e.target instanceof HTMLTextAreaElement`,
+// which is never true for the new Lexical editor → long paste was silently dropped
+// (no error, no chip). This block drives the composer shape the new dsh actually has.
+const shellPastes = [];
+let bailResult = true;
+const shell = {
+  rev: 77,
+  caretSpan() { return { start: 5, end: 9 }; },
+  paste(text) { shellPastes.push(text); }
+};
+const scoped = {
+  bail(scope, event, payload) { bailCalls.push({ event, payload }); return bailResult; },
+  get(name) { return name === "conversation" ? { input: { for: () => shell } } : void 0; }
+};
+const ctx2 = {
+  effect(fn) { const d = fn(); return typeof d === "function" ? d : () => {}; },
+  get() { return void 0; },
+  inputTriggers: { registerSource(src) { registeredSource = src; return () => {}; } },
+  slots: {
+    inject(key, factory) { dockFactory = factory; return factory(); },
+    register(opts, comp) { dockEntry = { opts, comp }; return () => {}; }
+  },
+  sessions: { scope() { return scoped; } }
+};
+surface.apply(ctx2);
+renderCtx = { refs: [], state: [], stateIdx: 0, effects: [] };
+dockEntry.comp(props);
+for (const fn of renderCtx.effects) fn(); // re-attach the paste listener for ctx2
+
+const editorEl = {
+  isContentEditable: true,
+  getAttribute: (name) => (name === "contenteditable" ? "true" : null),
+  closest(sel) {
+    if (sel === "[data-composer-card]") return {};
+    if (sel === "textarea, [contenteditable]") return editorEl;
+    return null;
+  }
+};
+bailCalls.length = 0;
+prevented = false;
+pasteHandler({
+  target: editorEl,
+  ctrlKey: false,
+  shiftKey: false,
+  clipboardData: { getData: () => longText, items: [] },
+  preventDefault() { prevented = true; },
+  stopImmediatePropagation() {}
+});
+assert.equal(prevented, true, "contenteditable composer: long paste is intercepted");
+assert.equal(bailCalls.length, 1, "contenteditable composer: chip insert dispatched");
+assert.equal(bailCalls[0].event, "slash/input-insert-reference");
+assert.deepEqual(
+  { start: bailCalls[0].payload.span.start, end: bailCalls[0].payload.span.end, draftRev: bailCalls[0].payload.span.draftRev },
+  { start: 5, end: 9, draftRev: 77 },
+  "contenteditable composer: span comes from shell caretSpan()/rev"
+);
+assert.equal(shellPastes.length, 0, "no raw-text fallback when the insert applied");
+
+// --- regression: refused insert falls back to shell.paste(text) ---
+bailResult = false;
+bailCalls.length = 0;
+prevented = false;
+pasteHandler({
+  target: editorEl,
+  ctrlKey: false,
+  shiftKey: false,
+  clipboardData: { getData: () => longText, items: [] },
+  preventDefault() { prevented = true; },
+  stopImmediatePropagation() {}
+});
+assert.equal(prevented, true, "contenteditable composer: refused insert still swallows the default");
+assert.equal(shellPastes.length, 1, "refused insert falls back to shell.paste(text)");
+assert.equal(shellPastes[0], longText, "fallback pastes the original text");
+
 console.log("ALL SMOKE ASSERTIONS PASSED");

@@ -1,5 +1,10 @@
 # 更新日志
 
+## 0.1.11
+- 修复在 dsh ≥ 0.1.5（如 0.1.5-rc.2）上完全失效：新版输入框由 `<textarea>` 改为 Lexical contenteditable 编辑器，旧粘贴处理器首行的 `instanceof HTMLTextAreaElement` 判定永远不成立，导致长文本粘贴被静默忽略（无任何报错）。现同时兼容两种输入框形态。
+- 光标位置改走新版 shell：`conversation.input.for(actx).caretSpan()` 取选区、`shell.rev` 作修订号 CAS，取代 textarea 的 `selectionStart/End`；插入被拒时兜底改为 `shell.paste(text)`（更旧版本仍回退 `setDraft`）。
+- 冒烟测试补充新版 contenteditable 场景的回归用例（旧代码跑该用例会失败）。
+
 ## 0.1.10
 - 支持 `dsh plugin --profile web add` 标准安装：package.json 增加 `dsh.bundle.patch` 声明并随包发布 `cordis.patch.yml`，安装后自动加入 profile 的 bundle 层，无需再手工编辑 profile 的 `cordis.patch.yml`。
 
