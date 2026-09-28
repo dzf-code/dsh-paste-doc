@@ -1,5 +1,11 @@
 # 更新日志
 
+## 0.1.13
+- 适配 dsh `0.1.7-rc.2`：新版把 `conversation.input.for(actx)` 收紧为"必须是 retained Session scope"，否则直接抛错。shell 查询改为**优先按 sessionId**（`conversation.input.shell(id)`，无需 scope），旧版 `for(actx)` 保留为回退。
+- 修复兜底路径的隐患：取不到 shell 且编辑器是 contenteditable 时（DOM 上读不到选区），旧逻辑会算出 `span={0,0}` 把芯片插到**文首**。现在改为**放行默认粘贴**，不再写坏草稿。
+- `dsh.client.inject` 清空：原先引用的 `@deepseek-ai/dsh-client-runtime` 自 dsh 0.1.5 起已被移除（新体系为 `dsh-client-modules` 等），插件实际只依赖静态 seed 模块 `react`。
+- 冒烟测试补充：按 ID 查询优先、`for(actx)` 抛错时的回退、以及无 shell 时放行（旧代码跑这些用例会失败）。
+
 ## 0.1.12
 - 恢复新版芯片的自定义外观：dsh ≥ 0.1.5 的引用芯片是 Lexical 节点，类名为 CSS Module 哈希值、旧的 `data-decoration=chip` 标记已废弃，导致样式失效。现在通过芯片根节点的 `title`（即插件标签 `📄 …`）识别自己的芯片，同时保留对旧版 `data-decoration=chip` 的支持。
 - 样式规则选择器改为 `[data-paste-doc-chip][data-paste-doc-chip]`（双属性提升优先级），确保压过框架哈希类名的默认样式（默认蓝底/6px 圆角 → 透明底 + 中性描边胶囊）。

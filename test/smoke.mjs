@@ -254,6 +254,89 @@ assert.equal(prevented, true, "contenteditable composer: refused insert still sw
 assert.equal(shellPastes.length, 1, "refused insert falls back to shell.paste(text)");
 assert.equal(shellPastes[0], longText, "fallback pastes the original text");
 
+// --- shell lookup prefers the by-id API (dsh >= 0.1.7 tightened for(actx)) ---
+// `for(actx)` now throws unless the scope is a retained Session scope, while `shell(id)`
+// needs only the session id — so the by-id lookup must be tried first.
+const byIdCalls = [];
+const byIdShell = {
+  rev: 91,
+  caretSpan() { return { start: 2, end: 4 }; },
+  paste(text) { shellPastes.push(text); }
+};
+const scoped3 = {
+  bail(scope, event, payload) { bailCalls.push({ event, payload }); return true; },
+  get(name) {
+    if (name !== "conversation") return void 0;
+    return {
+      input: {
+        shell(id) { byIdCalls.push(id); return byIdShell; },
+        for() { throw new Error("conversation.input.for requires a retained Session scope"); }
+      }
+    };
+  }
+};
+const ctx3 = {
+  effect(fn) { const d = fn(); return typeof d === "function" ? d : () => {}; },
+  get() { return void 0; },
+  inputTriggers: { registerSource(src) { registeredSource = src; return () => {}; } },
+  slots: {
+    inject(key, factory) { dockFactory = factory; return factory(); },
+    register(opts, comp) { dockEntry = { opts, comp }; return () => {}; }
+  },
+  sessions: { scope() { return scoped3; } }
+};
+surface.apply(ctx3);
+renderCtx = { refs: [], state: [], stateIdx: 0, effects: [] };
+dockEntry.comp(props);
+for (const fn of renderCtx.effects) fn();
+bailCalls.length = 0;
+prevented = false;
+pasteHandler({
+  target: editorEl,
+  ctrlKey: false,
+  shiftKey: false,
+  clipboardData: { getData: () => longText, items: [] },
+  preventDefault() { prevented = true; },
+  stopImmediatePropagation() {}
+});
+assert.equal(byIdCalls.length, 1, "shell(id) is consulted first");
+assert.equal(byIdCalls[0], "s1", "shell(id) receives the live session id");
+assert.deepEqual(
+  { start: bailCalls[0].payload.span.start, end: bailCalls[0].payload.span.end, draftRev: bailCalls[0].payload.span.draftRev },
+  { start: 2, end: 4, draftRev: 91 },
+  "the by-id shell drives the span even when for(actx) would throw"
+);
+
+// --- no shell + contenteditable (no DOM selection): pass through, never guess a span ---
+const scoped4 = {
+  bail() { throw new Error("bail must not be called without a resolvable span"); },
+  get(name) { return name === "conversation" ? { input: {} } : void 0; }
+};
+const ctx4 = {
+  effect(fn) { const d = fn(); return typeof d === "function" ? d : () => {}; },
+  get() { return void 0; },
+  inputTriggers: { registerSource(src) { registeredSource = src; return () => {}; } },
+  slots: {
+    inject(key, factory) { dockFactory = factory; return factory(); },
+    register(opts, comp) { dockEntry = { opts, comp }; return () => {}; }
+  },
+  sessions: { scope() { return scoped4; } }
+};
+surface.apply(ctx4);
+renderCtx = { refs: [], state: [], stateIdx: 0, effects: [] };
+dockEntry.comp(props);
+for (const fn of renderCtx.effects) fn();
+prevented = false;
+pasteHandler({
+  target: editorEl,
+  ctrlKey: false,
+  shiftKey: false,
+  clipboardData: { getData: () => longText, items: [] },
+  preventDefault() { prevented = true; },
+  stopImmediatePropagation() {}
+});
+assert.equal(prevented, false, "unresolvable span on contenteditable: paste passes through untouched");
+
 // --- chip tagger covers both chip DOMs (legacy data-decoration + new Lexical title) ---
 // The Lexical chip's class names are CSS-module hashes, so the label it exposes as `title`
 // is the only stable hook; the legacy chip keeps its label as the first child instead.
